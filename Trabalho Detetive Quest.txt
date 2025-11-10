@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TAM_NOME 50
+
+typedef struct NoSala {
+    char nome[TAM_NOME];
+    struct NoSala *esquerda, *direita;
+} NoSala;
+
+// Cria uma sala dinamicamente
+NoSala* criarSala(const char *nome) {
+    NoSala *s = (NoSala*)malloc(sizeof(NoSala));
+    if (!s) { printf("Erro ao alocar sala %s\n", nome); exit(1); }
+    strncpy(s->nome, nome, TAM_NOME - 1);
+    s->nome[TAM_NOME - 1] = '\0';
+    s->esquerda = s->direita = NULL;
+    return s;
+}
+
+// Exploração interativa da mansão
+void explorarSalas(NoSala *raiz) {
+    if (!raiz) { printf("Mapa não construído.\n"); return; }
+    NoSala *atual = raiz; char escolha;
+
+    printf("--- Detective Quest ---\nNavegue com 'e' (esq), 'd' (dir), 's' (sair)\n");
+
+    while (atual) {
+        printf("\nVocê está em: **%s**\n", atual->nome);
+
+        if (!atual->esquerda && !atual->direita) {
+            printf("Caminho encerrado! (nó-folha)\n"); break;
+        }
+
+        if (atual->esquerda) printf("[e] Esquerda\n");
+        if (atual->direita) printf("[d] Direita\n");
+        printf("[s] Sair\nEscolha: ");
+
+        if (scanf(" %c", &escolha) != 1) { while(getchar()!='\n'); continue; }
+        if (escolha >= 'A' && escolha <= 'Z') escolha += 32;
+
+        switch (escolha) {
+            case 'e': atual = atual->esquerda ? atual->esquerda : (printf("Sem caminho à esquerda.\n"), atual); break;
+            case 'd': atual = atual->direita ? atual->direita : (printf("Sem caminho à direita.\n"), atual); break;
+            case 's': printf("Exploração encerrada.\n"); atual = NULL; break;
+            default: printf("Opção inválida.\n");
+        }
+    }
+    printf("--- Fim da Jornada ---\n");
+}
+
+// Libera memória (pós-ordem)
+void liberarMapa(NoSala *r) {
+    if (r) { liberarMapa(r->esquerda); liberarMapa(r->direita); free(r); }
+}
+
+int main() {
+    NoSala *hall = criarSala("Hall de Entrada"),
+           *jantar = criarSala("Sala de Jantar"),
+           *biblio = criarSala("Biblioteca"),
+           *cozinha = criarSala("Cozinha"),
+           *escritorio = criarSala("Escritório"),
+           *estar = criarSala("Sala de Estar"),
+           *quarto = criarSala("Quarto Principal"),
+           *lavabo = criarSala("Lavabo"),
+           *jardim = criarSala("Jardim de Inverno");
+
+    hall->esquerda = jantar; hall->direita = biblio;
+    jantar->esquerda = cozinha; jantar->direita = escritorio;
+    biblio->esquerda = estar; biblio->direita = quarto;
+    cozinha->esquerda = lavabo; cozinha->direita = jardim;
+
+    printf("Mapa da mansão construído.\n");
+    explorarSalas(hall);
+    liberarMapa(hall);
+    return 0;
+}
